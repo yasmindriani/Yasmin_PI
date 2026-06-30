@@ -15,14 +15,33 @@ export default function DownloadPage() {
     }
   }, []);
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!photostripUrl) return;
+
+    const isIos = typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
     const link = document.createElement("a");
-    link.href = photostripUrl;
-    link.download = "berriebooth_photostrip.png";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const supportsDownload = "download" in link;
+
+    if (!supportsDownload || isIos) {
+      window.open(photostripUrl, "_blank");
+      return;
+    }
+
+    try {
+      const response = await fetch(photostripUrl);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const downloadLink = document.createElement("a");
+      downloadLink.href = url;
+      downloadLink.download = "berriebooth_photostrip.png";
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download failed, opening image in new tab", error);
+      window.open(photostripUrl, "_blank");
+    }
   };
 
   return (

@@ -143,10 +143,23 @@ export default function CameraPage() {
       retro: "grayscale(70%) sepia(40%) contrast(150%) brightness(95%)",
       soft: "blur(2px) brightness(170%) contrast(90%) saturate(110%)",
     };
+
+    // WORKAROUND FOR SAFARI/iOS: 
+    // Safari ignores ctx.filter when drawing directly from a <video> element.
+    // To fix this, we draw the video to a temporary offscreen canvas first, 
+    // then draw that canvas onto our main canvas where the filter will successfully apply.
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = videoWidth;
+    tempCanvas.height = videoHeight;
+    const tempCtx = tempCanvas.getContext("2d");
+    if (tempCtx) {
+      tempCtx.drawImage(video, 0, 0, videoWidth, videoHeight);
+    }
+
     ctx.filter = filterMap[filterId] || "none";
     ctx.translate(cropWidth, 0);
     ctx.scale(-1, 1);
-    ctx.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+    ctx.drawImage(tempCanvas, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
     const newPhotoData = canvas.toDataURL("image/jpeg", 0.7);
 
     setCapturedPhotos((prev) => {

@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 import { Rnd } from "react-rnd";
-import * as htmlToImage from "html-to-image";
+import html2canvas from "html2canvas";
 
 export default function ColorPage() {
   const router = useRouter();
@@ -629,15 +629,12 @@ export default function ColorPage() {
                     setSelectedStickerId(null); // deselect to hide borders
                     await new Promise((r) => setTimeout(r, 100)); // wait for React re-render
                     try {
-                      // html-to-image handles SVG rendering flawlessly without cropping or stretching
-                      const dataUrl = await htmlToImage.toPng(frameRef.current, {
-                        quality: 1,
-                        pixelRatio: 3,
-                        style: {
-                          transform: 'none',
-                          filter: 'none'
-                        }
+                      const canvas = await html2canvas(frameRef.current, {
+                        scale: 3,
+                        useCORS: true,
+                        backgroundColor: null,
                       });
+                      const dataUrl = canvas.toDataURL("image/png", 1.0);
                       sessionStorage.setItem("finalPhotostrip", dataUrl);
                       router.push(`/capture/${frameId}/download`);
                     } catch (error) {
